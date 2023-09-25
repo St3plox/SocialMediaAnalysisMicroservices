@@ -9,7 +9,7 @@
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>DataProcessingService</artifactId>
+    <artifactId>DataCollectionService</artifactId>
 
     <properties>
         <maven.compiler.source>17</maven.compiler.source>
@@ -55,6 +55,13 @@
             <artifactId>google-api-services-youtube</artifactId>
             <version>v3-rev222-1.25.0</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
+            <version>4.0.3</version>
+        </dependency>
+
     </dependencies>
 
 
