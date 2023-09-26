@@ -2,9 +2,11 @@
 <project version="4">
   <component name="Encoding">
     <file url="file://$PROJECT_DIR$/AnalysisService/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/AnalysisService/src/main/resources" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/DataCollectionService/src/main/java" charset="UTF-8" />
-    <file url="file://$PROJECT_DIR$/DataCollectionService/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/analysis-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/analysis-service/src/main/resources" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/api-gateway/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/data-collection-service/src/main/java" charset="UTF-8" />
+    <file url="file://$PROJECT_DIR$/data-collection-service/src/main/resources" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/discovery-server/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/java" charset="UTF-8" />
     <file url="file://$PROJECT_DIR$/src/main/resources" charset="UTF-8" />

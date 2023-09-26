@@ -17,9 +17,10 @@
     </parent>
 
     <modules>
-        <module>AnalysisService</module>
-        <module>DataCollectionService</module>
+        <module>analysis-service</module>
+        <module>data-collection-service</module>
         <module>discovery-server</module>
+        <module>api-gateway</module>
     </modules>
 
     <properties>
