@@ -1,12 +1,12 @@
 package ru.tveu.DataCollectionService.dto;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.SuperBuilder;
 
-@Data
 @AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@SuperBuilder
 public class ApiTransferObject {
 
     private String id;
