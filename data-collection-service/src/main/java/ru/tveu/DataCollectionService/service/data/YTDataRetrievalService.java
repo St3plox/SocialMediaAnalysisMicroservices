@@ -36,7 +36,7 @@ public class YTDataRetrievalService implements DataRetrievalService {
     private final YTUrlProcessor urlProcessor;
 
     @Override
-    public List<YtTransferObject> retrieveData(String url) throws IOException {
+    public List<YtTransferObject> retrieveData(String url, long maxComments) throws IOException {
         YouTube youtubeService = getService();
 
         String videoId = urlProcessor.extractContentId(url);
@@ -46,7 +46,6 @@ public class YTDataRetrievalService implements DataRetrievalService {
         String nextPageToken = null;
 
         while (true) {
-            long maxComments = 5000;
             YouTube.CommentThreads.List request = youtubeService.commentThreads()
                     .list("snippet,replies")
                     .setKey(developerKey)

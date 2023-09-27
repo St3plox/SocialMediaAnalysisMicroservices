@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -18,7 +17,7 @@ public class AnalysisController {
 
     @GetMapping("/yt")
     @ResponseStatus(HttpStatus.OK)
-    public List<? extends ApiTransferObject> getVideoComments(@RequestParam String url) {
-        return dataProcessor.tokenizeComments(url);
+    public List<? extends ApiTransferObject> getVideoComments(@RequestParam String url, @RequestParam(defaultValue = "5000") long maxComments) {
+        return dataProcessor.tokenizeComments(url,  maxComments);
     }
 }

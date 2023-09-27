@@ -18,8 +18,11 @@ public class DataCollectionController {
 
     @GetMapping("/yt")
     @ResponseStatus(HttpStatus.OK)
-    public List<? extends ApiTransferObject> getVideoComments(@RequestParam String url) throws IOException {
-        return dataRetrievalService.retrieveData(url);
+    public List<? extends ApiTransferObject> getVideoComments
+            (@RequestParam String url, @RequestParam long maxComments)
+            throws IOException {
+
+        return dataRetrievalService.retrieveData(url, maxComments);
     }
 
 

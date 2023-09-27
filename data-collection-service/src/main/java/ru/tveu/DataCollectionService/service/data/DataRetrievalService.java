@@ -7,6 +7,6 @@ import java.util.List;
 
 public interface DataRetrievalService {
 
-    List<? extends ApiTransferObject> retrieveData(String url) throws IOException;
+    List<? extends ApiTransferObject> retrieveData(String url, long maxResponse) throws IOException;
 
 }

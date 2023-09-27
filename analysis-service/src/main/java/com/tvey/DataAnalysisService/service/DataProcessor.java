@@ -6,5 +6,5 @@ import java.util.List;
 
 public interface DataProcessor {
 
-    List<? extends ApiTransferObject> tokenizeComments(String url);
+    List<? extends ApiTransferObject> tokenizeComments(String url, long maxResponse);
 }
