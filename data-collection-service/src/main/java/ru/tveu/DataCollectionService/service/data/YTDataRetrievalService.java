@@ -17,8 +17,9 @@ import ru.tveu.DataCollectionService.service.url.YTUrlProcessor;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @PropertySource("application-dev.properties")
@@ -49,45 +50,37 @@ public class YTDataRetrievalService implements DataRetrievalService {
                 .execute();
 
         List<CommentThread> comments = response.getItems();
-        List<YtTransferObject> transferObjects = new ArrayList<>(response.size());
 
-        comments.forEach(
-                (commentThread) ->
-                {
-                    Comment comment =
-                            commentThread.getSnippet().getTopLevelComment();
+        return comments.stream()
+                .flatMap(commentThread -> {
 
+                    Comment comment = commentThread.getSnippet().getTopLevelComment();
                     long repliesCount = commentThread.getSnippet().getTotalReplyCount();
 
-                    transferObjects.add(
-                            new YtTransferObject(
-                                    comment.getId(),
-                                    DataSource.YOUTUBE,
-                                    comment.getSnippet().getTextOriginal(),
-                                    comment.getSnippet().getAuthorDisplayName(),
-                                    comment.getSnippet().getPublishedAt().toString()
-                            )
+                    Stream<YtTransferObject> topLevelCommentStream = Stream.of(
+                            YtTransferObject.builder()
+                                    .id(comment.getId())
+                                    .source(DataSource.YOUTUBE)
+                                    .content(comment.getSnippet().getTextOriginal())
+                                    .authorDisplayName(comment.getSnippet().getAuthorDisplayName())
+                                    .publishedAt(comment.getSnippet().getPublishedAt().toString())
+                                    .build()
                     );
 
-                    if (repliesCount == 0) return;
+                    Stream<YtTransferObject> replyStream = repliesCount > 0 ?
+                            commentThread.getReplies().getComments().stream().map(reply ->
+                                    YtTransferObject.builder()
+                                            .id(reply.getId())
+                                            .source(DataSource.YOUTUBE)
+                                            .content(reply.getSnippet().getTextOriginal())
+                                            .authorDisplayName(reply.getSnippet().getAuthorDisplayName())
+                                            .publishedAt(reply.getSnippet().getPublishedAt().toString())
+                                            .build()
+                            ) : Stream.empty();
 
-                    for (Comment reply : commentThread.getReplies().getComments()) {
-
-                        transferObjects.add(
-                                new YtTransferObject(
-                                        reply.getId(),
-                                        DataSource.YOUTUBE,
-                                        reply.getSnippet().getTextOriginal(),
-                                        reply.getSnippet().getAuthorDisplayName(),
-                                        reply.getSnippet().getPublishedAt().toString()
-                                )
-                        );
-                    }
-                }
-        );
-
-
-        return transferObjects;
+                    return Stream.concat(topLevelCommentStream, replyStream);
+                })
+                .collect(Collectors.toList());
     }
 
 
