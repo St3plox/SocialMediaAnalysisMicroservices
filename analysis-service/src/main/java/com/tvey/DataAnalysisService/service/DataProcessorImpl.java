@@ -16,7 +16,12 @@ public class DataProcessorImpl implements DataProcessor {
     @Override
     public List<? extends ApiTransferObject> tokenizeComments(String url) {
 
-        return webClient.build().get()
+        return webClient
+                .codecs(configurer -> configurer
+                        .defaultCodecs()
+                        .maxInMemorySize(16 * 1024 * 1024))
+                .build()
+                .get()
                 .uri("http://data-processing-service/api/data/" +
                         "yt?url=" + url)
                 .retrieve()
