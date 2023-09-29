@@ -9,7 +9,7 @@ public interface ModelService<T extends BaseModel> {
 
     Optional<T> trainModel(String trainingDataFile) throws IOException;
 
-    T loadModel(String resourcePath) throws IOException, ClassNotFoundException;
+    T loadModel( String filePath) throws IOException, ClassNotFoundException;
 
-    void saveModel(T model, String resourcePath) throws IOException;
+    void saveModel(T model, String filePath) throws IOException;
 }

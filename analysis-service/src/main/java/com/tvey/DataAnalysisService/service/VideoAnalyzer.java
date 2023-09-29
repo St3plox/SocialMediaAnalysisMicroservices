@@ -1,24 +1,22 @@
 package com.tvey.DataAnalysisService.service;
 
 import com.tvey.DataAnalysisService.dto.YtTransferObject;
-import com.tvey.DataAnalysisService.entity.CommentSentiment;
+import com.tvey.DataAnalysisService.entity.CommentAnalysisResult;
 import com.tvey.DataAnalysisService.entity.VideoAnalysisResult;
-import com.tvey.DataAnalysisService.service.lemma.LemmaService;
 import com.tvey.DataAnalysisService.service.model.SentimentModelService;
-import com.tvey.DataAnalysisService.service.pos.PosService;
 import lombok.RequiredArgsConstructor;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.tokenize.SimpleTokenizer;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 
 @RequiredArgsConstructor
@@ -27,18 +25,12 @@ public class VideoAnalyzer implements TextAnalyzer {
 
     private final WebClient.Builder webClient;
 
-    private final ResourceLoader resourceLoader;
-
     private final SentimentModelService modelService;
 
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
-    private final LemmaService lemmaService;
-
-    private final PosService posService;
-
     @Override
-    public VideoAnalysisResult analyzeEntity(String url, long maxComments) throws IOException, ClassNotFoundException {
+    public VideoAnalysisResult analyzeEntity(String url, long maxComments) throws IOException {
 
         ParameterizedTypeReference<List<YtTransferObject>> typeReference =
                 new ParameterizedTypeReference<>() {
@@ -56,36 +48,32 @@ public class VideoAnalyzer implements TextAnalyzer {
                 .bodyToMono(typeReference)
                 .block();
 
-        Resource resource = resourceLoader.getResource("classpath:models/en-sentiment.bin");
-
         DoccatModel model;
+        String fileName = "analysis-service/src/main/resources/models/en-sentiment.bin";
+        File modelFile = new File(fileName);
 
 
-        if (resource.exists()) {
-            model = modelService.loadModel("classpath:models/en-sentiment.bin");
+        if (modelFile.exists()) {
+            model = modelService.loadModel(fileName);
         } else {
             model = unwrapModel(modelService.trainModel("twitter_training.csv"));
-            /*           modelService.saveModel(model, "en-sentiment.bin");*/
+            modelService.saveModel(model, fileName);
         }
 
 
         DocumentCategorizerME categorizer = new DocumentCategorizerME(model);
 
 
-        assert comments != null;
-
-        List<CommentSentiment> commentSentiments = new ArrayList<>((int) maxComments);
+        List<CommentAnalysisResult> commentAnalysisResults = new ArrayList<>((int) maxComments);
 
         int positive = 0;
         int negative = 0;
         int neutral = 0;
         int irrelevant = 0;
 
-        for (YtTransferObject comment : comments) {
-            String[] lemmatizedTokens;
+        for (YtTransferObject comment : Objects.requireNonNull(comments)) {
+
             String[] tokens = tokenizer.tokenize(comment.getContent());
-            String[] tags = posService.tag(tokens);
-            lemmatizedTokens = lemmaService.lemmatize(tokens, tags);
 
             double[] probabilities = categorizer.categorize(tokens);
             String category = categorizer.getBestCategory(probabilities);
@@ -97,7 +85,7 @@ public class VideoAnalyzer implements TextAnalyzer {
                 case "Irrelevant" -> irrelevant++;
             }
 
-            commentSentiments.add(new CommentSentiment(
+            commentAnalysisResults.add(new CommentAnalysisResult(
                     comment.getId(),
                     url,
                     comment.getAuthorDisplayName(),
@@ -117,11 +105,11 @@ public class VideoAnalyzer implements TextAnalyzer {
                 (double) neutral * 100 / commentsAmount,
                 (double) irrelevant * 100 / commentsAmount,
                 commentsAmount,
-                commentSentiments
+                commentAnalysisResults
         );
     }
 
-    private static DoccatModel unwrapModel(Optional<DoccatModel> model) {
+    private DoccatModel unwrapModel(Optional<DoccatModel> model) {
         if (model.isPresent()) {
             return model.get();
         } else {

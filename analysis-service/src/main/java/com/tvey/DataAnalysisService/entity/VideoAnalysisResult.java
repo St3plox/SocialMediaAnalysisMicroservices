@@ -25,5 +25,5 @@ public class VideoAnalysisResult {
 
     private int commentsAmount;
 
-    private List<CommentSentiment> commentSentiments;
+    private List<CommentAnalysisResult> commentAnalysisResults;
 }
