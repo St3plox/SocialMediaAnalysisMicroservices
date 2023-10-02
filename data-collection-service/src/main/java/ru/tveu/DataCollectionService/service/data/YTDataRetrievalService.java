@@ -2,7 +2,7 @@ package ru.tveu.DataCollectionService.service.data;
 
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.youtube.YouTube;
 import com.google.api.services.youtube.model.Comment;
 import com.google.api.services.youtube.model.CommentThread;
@@ -27,7 +27,7 @@ import java.util.stream.Stream;
 public class YTDataRetrievalService implements DataRetrievalService {
 
     private static final String APPLICATION_NAME = "SentimentAnalysisApi";
-    private static final JacksonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final GsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     @Value("${YOUTUBE_API_KEY}")
     private String developerKey;
