@@ -13,7 +13,7 @@ import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
 import ru.tveu.DataCollectionService.dto.DataSource;
 import ru.tveu.DataCollectionService.dto.YtTransferObject;
-import ru.tveu.DataCollectionService.service.url.YTUrlProcessor;
+import ru.tveu.DataCollectionService.service.url.UrlProcessor;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -32,7 +32,8 @@ public class YTDataRetrievalService implements DataRetrievalService {
     @Value("${YOUTUBE_API_KEY}")
     private String developerKey;
 
-    private final YTUrlProcessor urlProcessor;
+    private final UrlProcessor urlProcessor;
+
 
     @Override
     public List<YtTransferObject> retrieveData(String url, long maxComments) throws IOException {
@@ -42,14 +43,16 @@ public class YTDataRetrievalService implements DataRetrievalService {
 
         List<YtTransferObject> allComments = new ArrayList<>();
 
+
         String nextPageToken = null;
+
 
         while (true) {
             YouTube.CommentThreads.List request = youtubeService.commentThreads()
                     .list("snippet,replies")
                     .setKey(developerKey)
                     .setVideoId(videoId)
-                    .setMaxResults(Math.min(maxComments - allComments.size(), 100))  // Limit to remaining comments
+                    .setMaxResults(Math.min(maxComments - allComments.size(), 100))
                     .setPageToken(nextPageToken);
 
             CommentThreadListResponse response = request.execute();

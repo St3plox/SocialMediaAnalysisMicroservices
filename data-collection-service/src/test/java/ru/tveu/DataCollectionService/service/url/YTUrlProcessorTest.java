@@ -1,4 +1,4 @@
-package ru.tveu.DataCollectionService.service;
+package ru.tveu.DataCollectionService.service.url;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -7,9 +7,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.junit.jupiter.MockitoExtension;
 import ru.tveu.DataCollectionService.exception.url.UrlProcessorException;
-import ru.tveu.DataCollectionService.service.url.YTUrlProcessor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertAll;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -33,7 +33,7 @@ class YTUrlProcessorTest {
         noProtocolUrl = "www.youtube.com/watch?v=qOqsEKGFUIY";
         noDomainUrl = "youtube.com/watch?v=qOqsEKGFUIY";
         videoId = "qOqsEKGFUIY";
-        wrongUrl="youtube.com/watch?v";
+        wrongUrl = "youtube.com/watch?v";
     }
 
 
