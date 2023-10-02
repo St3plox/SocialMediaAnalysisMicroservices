@@ -11,9 +11,13 @@ public class YtTransferObject extends ApiTransferObject {
 
     private String publishedAt;
 
-    public YtTransferObject(String id, DataSource source, String content, String authorDisplayName, String publishedAt) {
+    private String videoId;
+
+    public YtTransferObject(String id, DataSource source, String content, String authorDisplayName, String publishedAt, String videoId) {
         super(id, source, content);
         this.authorDisplayName = authorDisplayName;
         this.publishedAt = publishedAt;
+        this.videoId = videoId;
     }
+
 }

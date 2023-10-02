@@ -19,7 +19,6 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Service
@@ -69,6 +68,7 @@ public class YTDataRetrievalService implements DataRetrievalService {
                         Stream<YtTransferObject> topLevelCommentStream = Stream.of(
                                 YtTransferObject.builder()
                                         .id(comment.getId())
+                                        .videoId(videoId)
                                         .source(DataSource.YOUTUBE)
                                         .content(comment.getSnippet().getTextOriginal())
                                         .authorDisplayName(comment.getSnippet().getAuthorDisplayName())
@@ -80,6 +80,7 @@ public class YTDataRetrievalService implements DataRetrievalService {
                                 commentThread.getReplies().getComments().stream().map(reply ->
                                         YtTransferObject.builder()
                                                 .id(reply.getId())
+                                                .videoId(videoId)
                                                 .source(DataSource.YOUTUBE)
                                                 .content(reply.getSnippet().getTextOriginal())
                                                 .authorDisplayName(reply.getSnippet().getAuthorDisplayName())
@@ -89,7 +90,7 @@ public class YTDataRetrievalService implements DataRetrievalService {
 
                         return Stream.concat(topLevelCommentStream, replyStream);
                     })
-                    .collect(Collectors.toList());
+                    .toList();
 
             allComments.addAll(commentObjects);
 

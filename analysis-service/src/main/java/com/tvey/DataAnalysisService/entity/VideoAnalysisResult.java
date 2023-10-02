@@ -11,9 +11,9 @@ import java.util.List;
 @NoArgsConstructor
 public class VideoAnalysisResult {
 
-    private String id;
+    private long id;
 
-    private String videUrl;
+    private String videoId;
 
     private double positivePart;
 

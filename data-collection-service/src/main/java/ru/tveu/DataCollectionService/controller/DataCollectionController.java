@@ -24,6 +24,4 @@ public class DataCollectionController {
 
         return dataRetrievalService.retrieveData(url, maxComments);
     }
-
-
 }

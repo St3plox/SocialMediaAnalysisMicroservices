@@ -48,6 +48,13 @@ public class VideoAnalyzer implements TextAnalyzer {
                 .bodyToMono(typeReference)
                 .block();
 
+        String videoId;
+
+        if (Objects.requireNonNull(comments).isEmpty())
+            throw new IllegalStateException(url + "does not contain comments");
+        else
+            videoId = comments.get(0).getVideoId();
+
         DoccatModel model;
         String fileName = "analysis-service/src/main/resources/models/en-sentiment.bin";
         File modelFile = new File(fileName);
@@ -70,6 +77,7 @@ public class VideoAnalyzer implements TextAnalyzer {
         int negative = 0;
         int neutral = 0;
         int irrelevant = 0;
+
 
         for (YtTransferObject comment : Objects.requireNonNull(comments)) {
 
@@ -98,8 +106,8 @@ public class VideoAnalyzer implements TextAnalyzer {
         int commentsAmount = comments.size();
 
         return new VideoAnalysisResult(
-                "1",
-                url,
+                1L,
+                videoId,
                 (double) positive * 100 / commentsAmount,
                 (double) negative * 100 / commentsAmount,
                 (double) neutral * 100 / commentsAmount,
