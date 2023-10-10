@@ -2,7 +2,6 @@ package ru.tveu.DataCollectionService.service.data;
 
 import ru.tveu.shared.dto.ApiDTO;
 import ru.tveu.shared.dto.ContentDTO;
-import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
 
