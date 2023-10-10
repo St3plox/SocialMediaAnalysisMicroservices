@@ -1,6 +1,5 @@
 package com.tvey.DataAnalysisService.service;
 
-import com.tvey.DataAnalysisService.dto.YtTransferObject;
 import com.tvey.DataAnalysisService.entity.CommentAnalysisResult;
 import com.tvey.DataAnalysisService.entity.VideoAnalysisResult;
 import com.tvey.DataAnalysisService.service.model.SentimentModelService;
@@ -11,6 +10,8 @@ import opennlp.tools.tokenize.SimpleTokenizer;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import ru.tveu.shared.dto.ApiDTO;
+import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +20,8 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-@RequiredArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class VideoAnalyzer implements TextAnalyzer {
 
     private final WebClient.Builder webClient;
@@ -32,11 +33,11 @@ public class VideoAnalyzer implements TextAnalyzer {
     @Override
     public VideoAnalysisResult analyzeEntity(String url, long maxComments) throws IOException {
 
-        ParameterizedTypeReference<List<YtTransferObject>> typeReference =
+        ParameterizedTypeReference<ApiDTO<YtContentDTO>> typeReference =
                 new ParameterizedTypeReference<>() {
                 };
 
-        List<YtTransferObject> comments = webClient
+        ApiDTO<YtContentDTO> apiDTO = webClient
                 .codecs(configurer -> configurer
                         .defaultCodecs()
                         .maxInMemorySize(16 * 1024 * 1024))
@@ -48,12 +49,7 @@ public class VideoAnalyzer implements TextAnalyzer {
                 .bodyToMono(typeReference)
                 .block();
 
-        String videoId;
-
-        if (Objects.requireNonNull(comments).isEmpty())
-            throw new IllegalStateException(url + "does not contain comments");
-        else
-            videoId = comments.get(0).getVideoId();
+        List<YtContentDTO> comments = Objects.requireNonNull(apiDTO).getContent();
 
         DoccatModel model;
         String fileName = "analysis-service/src/main/resources/models/en-sentiment.bin";
@@ -79,7 +75,7 @@ public class VideoAnalyzer implements TextAnalyzer {
         int irrelevant = 0;
 
 
-        for (YtTransferObject comment : Objects.requireNonNull(comments)) {
+        for (YtContentDTO comment : Objects.requireNonNull(comments)) {
 
             String[] tokens = tokenizer.tokenize(comment.getContent());
 
@@ -103,7 +99,8 @@ public class VideoAnalyzer implements TextAnalyzer {
             ));
         }
 
-        int commentsAmount = comments.size();
+        int commentsAmount = apiDTO.getContentSize();
+        String videoId = apiDTO.getId();
 
         return new VideoAnalysisResult(
                 1L,

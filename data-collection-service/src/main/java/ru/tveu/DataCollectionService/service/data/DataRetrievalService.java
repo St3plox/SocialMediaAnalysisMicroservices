@@ -1,12 +1,13 @@
 package ru.tveu.DataCollectionService.service.data;
 
-import ru.tveu.DataCollectionService.dto.ApiTransferObject;
+import ru.tveu.shared.dto.ApiDTO;
+import ru.tveu.shared.dto.ContentDTO;
+import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
-import java.util.List;
 
 public interface DataRetrievalService {
 
-    List<? extends ApiTransferObject> retrieveData(String url, long maxResponse) throws IOException;
+    ApiDTO<? extends ContentDTO> retrieveData(String url, long maxResponse) throws IOException;
 
 }

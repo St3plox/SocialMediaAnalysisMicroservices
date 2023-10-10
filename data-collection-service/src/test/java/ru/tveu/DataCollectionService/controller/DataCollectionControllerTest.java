@@ -26,15 +26,12 @@ class DataCollectionControllerTest {
     @MockBean
     private DataRetrievalService dataRetrievalService;
 
-
-
-
     @Test
     void getVideoComments() throws Exception {
         this.mockMvc.perform(get("/api/data/yt")
-                        .param("url", "url=www.youtube.com/watch?v=ymEG9QcIgJU")
+                        .param("url", "www.youtube.com/watch?v=ymEG9QcIgJU")
                         .param("maxComments", "50"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
     }
 }

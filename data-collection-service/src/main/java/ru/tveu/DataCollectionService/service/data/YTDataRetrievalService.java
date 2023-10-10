@@ -11,9 +11,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Service;
-import ru.tveu.DataCollectionService.dto.DataSource;
-import ru.tveu.DataCollectionService.dto.YtTransferObject;
 import ru.tveu.DataCollectionService.service.url.UrlProcessor;
+import ru.tveu.shared.dto.ApiDTO;
+import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
@@ -25,7 +25,6 @@ import java.util.stream.Stream;
 @PropertySource("application-dev.properties")
 @RequiredArgsConstructor
 public class YTDataRetrievalService implements DataRetrievalService {
-
     private static final String APPLICATION_NAME = "SentimentAnalysisApi";
     private static final GsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
@@ -36,12 +35,12 @@ public class YTDataRetrievalService implements DataRetrievalService {
 
 
     @Override
-    public List<YtTransferObject> retrieveData(String url, long maxComments) throws IOException {
+    public ApiDTO<YtContentDTO> retrieveData(String url, long maxComments) throws IOException {
         YouTube youtubeService = getService();
 
         String videoId = urlProcessor.extractContentId(url);
 
-        List<YtTransferObject> allComments = new ArrayList<>();
+        List<YtContentDTO> allComments = new ArrayList<>();
 
 
         String nextPageToken = null;
@@ -63,32 +62,18 @@ public class YTDataRetrievalService implements DataRetrievalService {
                 break;
             }
 
-            List<YtTransferObject> commentObjects = comments.stream()
+            List<YtContentDTO> commentObjects = comments.stream()
                     .flatMap(commentThread -> {
+
                         Comment comment = commentThread.getSnippet().getTopLevelComment();
                         long repliesCount = commentThread.getSnippet().getTotalReplyCount();
 
-                        Stream<YtTransferObject> topLevelCommentStream = Stream.of(
-                                YtTransferObject.builder()
-                                        .id(comment.getId())
-                                        .videoId(videoId)
-                                        .source(DataSource.YOUTUBE)
-                                        .content(comment.getSnippet().getTextOriginal())
-                                        .authorDisplayName(comment.getSnippet().getAuthorDisplayName())
-                                        .publishedAt(comment.getSnippet().getPublishedAt().toString())
-                                        .build()
+                        Stream<YtContentDTO> topLevelCommentStream = Stream.of(
+                                createYtObject(comment)
                         );
 
-                        Stream<YtTransferObject> replyStream = repliesCount > 0 ?
-                                commentThread.getReplies().getComments().stream().map(reply ->
-                                        YtTransferObject.builder()
-                                                .id(reply.getId())
-                                                .videoId(videoId)
-                                                .source(DataSource.YOUTUBE)
-                                                .content(reply.getSnippet().getTextOriginal())
-                                                .authorDisplayName(reply.getSnippet().getAuthorDisplayName())
-                                                .publishedAt(reply.getSnippet().getPublishedAt().toString())
-                                                .build()
+                        Stream<YtContentDTO> replyStream = repliesCount > 0 ?
+                                commentThread.getReplies().getComments().stream().map(this::createYtObject
                                 ) : Stream.empty();
 
                         return Stream.concat(topLevelCommentStream, replyStream);
@@ -100,17 +85,22 @@ public class YTDataRetrievalService implements DataRetrievalService {
             nextPageToken = response.getNextPageToken();
 
             if (nextPageToken == null || allComments.size() >= maxComments) {
-                break;  // No more comments or reached the max limit
+                break;
             }
         }
 
-        return allComments;
+        ApiDTO<YtContentDTO> transferObject = new ApiDTO<>(videoId);
+        transferObject.setContentSize(allComments.size());
+        transferObject.setContent(allComments);
+
+        return transferObject;
     }
 
 
     private static YouTube getService() {
 
         final NetHttpTransport httpTransport;
+
         try {
             httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         } catch (GeneralSecurityException | IOException e) {
@@ -121,6 +111,15 @@ public class YTDataRetrievalService implements DataRetrievalService {
                 .setApplicationName(APPLICATION_NAME)
                 .build();
 
+    }
+
+    private YtContentDTO createYtObject(Comment comment){
+        return YtContentDTO.builder()
+                .id(comment.getId())
+                .content(comment.getSnippet().getTextOriginal())
+                .authorDisplayName(comment.getSnippet().getAuthorDisplayName())
+                .publishedAt(comment.getSnippet().getPublishedAt().toString())
+                .build();
     }
 
 

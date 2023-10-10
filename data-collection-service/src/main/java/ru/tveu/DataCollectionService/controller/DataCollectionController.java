@@ -1,13 +1,16 @@
 package ru.tveu.DataCollectionService.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import ru.tveu.DataCollectionService.dto.ApiTransferObject;
 import ru.tveu.DataCollectionService.service.data.DataRetrievalService;
+import ru.tveu.shared.dto.ApiDTO;
+import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/data")
@@ -16,12 +19,16 @@ public class DataCollectionController {
 
     private final DataRetrievalService dataRetrievalService;
 
-    @GetMapping("/yt")
+    @GetMapping(value = "/yt")
     @ResponseStatus(HttpStatus.OK)
-    public List<? extends ApiTransferObject> getVideoComments
-            (@RequestParam String url, @RequestParam long maxComments)
+    public ResponseEntity<ApiDTO<YtContentDTO>> getVideoComments(@RequestParam String url, @RequestParam long maxComments)
             throws IOException {
 
-        return dataRetrievalService.retrieveData(url, maxComments);
+        ApiDTO<YtContentDTO> response = (ApiDTO<YtContentDTO>) dataRetrievalService.retrieveData(url, maxComments);
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
 }
