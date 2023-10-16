@@ -1,15 +1,17 @@
-package com.tvey.DataAnalysisService.service;
+package com.tvey.DataAnalysisService.service.analyzer;
 
+
+import com.tvey.DataAnalysisService.dto.DataSource;
+import com.tvey.DataAnalysisService.dto.YtVideoAnalysisDTO;
 import com.tvey.DataAnalysisService.entity.CommentAnalysisResult;
 import com.tvey.DataAnalysisService.entity.VideoAnalysisResult;
 import com.tvey.DataAnalysisService.service.model.SentimentModelService;
+import com.tvey.DataAnalysisService.service.result.interfaces.AnalysisResultService;
 import lombok.RequiredArgsConstructor;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
 import opennlp.tools.tokenize.SimpleTokenizer;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
-import org.springframework.web.reactive.function.client.WebClient;
 import ru.tveu.shared.dto.ApiDTO;
 import ru.tveu.shared.dto.YtContentDTO;
 
@@ -22,32 +24,15 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
-public class VideoAnalyzer implements TextAnalyzer {
-
-    private final WebClient.Builder webClient;
+public class VideoAnalyzer implements TextAnalyzer<YtContentDTO, YtVideoAnalysisDTO> {
 
     private final SentimentModelService modelService;
 
     private final SimpleTokenizer tokenizer = SimpleTokenizer.INSTANCE;
 
     @Override
-    public VideoAnalysisResult analyzeEntity(String url, long maxComments) throws IOException {
+    public YtVideoAnalysisDTO analyzeEntity(ApiDTO<YtContentDTO> apiDTO) throws IOException {
 
-        ParameterizedTypeReference<ApiDTO<YtContentDTO>> typeReference =
-                new ParameterizedTypeReference<>() {
-                };
-
-        ApiDTO<YtContentDTO> apiDTO = webClient
-                .codecs(configurer -> configurer
-                        .defaultCodecs()
-                        .maxInMemorySize(16 * 1024 * 1024))
-                .build()
-                .get()
-                .uri("http://data-processing-service/api/data/" +
-                        "yt?url=" + url + "&" + "maxComments=" + maxComments)
-                .retrieve()
-                .bodyToMono(typeReference)
-                .block();
 
         List<YtContentDTO> comments = Objects.requireNonNull(apiDTO).getContent();
 
@@ -67,13 +52,18 @@ public class VideoAnalyzer implements TextAnalyzer {
         DocumentCategorizerME categorizer = new DocumentCategorizerME(model);
 
 
-        List<CommentAnalysisResult> commentAnalysisResults = new ArrayList<>((int) maxComments);
+        List<CommentAnalysisResult> commentAnalysisResults = new ArrayList<>(apiDTO.getContentSize());
 
         int positive = 0;
         int negative = 0;
         int neutral = 0;
         int irrelevant = 0;
 
+        String videoId = apiDTO.getId();
+
+         VideoAnalysisResult analysisResult =  VideoAnalysisResult.builder()
+                .videoId(videoId)
+                .build();
 
         for (YtContentDTO comment : Objects.requireNonNull(comments)) {
 
@@ -89,29 +79,29 @@ public class VideoAnalyzer implements TextAnalyzer {
                 case "Irrelevant" -> irrelevant++;
             }
 
-            commentAnalysisResults.add(new CommentAnalysisResult(
-                    comment.getId(),
-                    url,
-                    comment.getAuthorDisplayName(),
-                    comment.getContent(),
-                    comment.getPublishedAt(),
-                    category
-            ));
+            commentAnalysisResults.add(
+                    CommentAnalysisResult.builder()
+                            .videoAnalysisResult(analysisResult)
+                            .content(comment.getContent())
+                            .category(category)
+                            .build()
+            );
+
+
         }
 
-        int commentsAmount = apiDTO.getContentSize();
-        String videoId = apiDTO.getId();
+        analysisResult.setPositive(positive);
+        analysisResult.setNegative(negative);
+        analysisResult.setNeutral(neutral);
+        analysisResult.setIrrelevant(irrelevant);
 
-        return new VideoAnalysisResult(
-                1L,
-                videoId,
-                (double) positive * 100 / commentsAmount,
-                (double) negative * 100 / commentsAmount,
-                (double) neutral * 100 / commentsAmount,
-                (double) irrelevant * 100 / commentsAmount,
-                commentsAmount,
-                commentAnalysisResults
-        );
+        return YtVideoAnalysisDTO.builder()
+                .videoAnalysisResult(analysisResult)
+                .commentAnalysisResults(commentAnalysisResults)
+                .dataSource(DataSource.YOUTUBE)
+                .build();
+
+
     }
 
     private DoccatModel unwrapModel(Optional<DoccatModel> model) {
@@ -121,4 +111,5 @@ public class VideoAnalyzer implements TextAnalyzer {
             throw new IllegalStateException("Trained model is null");
         }
     }
+
 }

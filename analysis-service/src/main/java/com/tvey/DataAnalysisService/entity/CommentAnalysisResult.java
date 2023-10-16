@@ -1,25 +1,30 @@
+
 package com.tvey.DataAnalysisService.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
 
-@Data
-@AllArgsConstructor
+import java.util.Date;
+
+@Entity(name = "comment_analysis_result")
+@Getter
+@Setter
 @NoArgsConstructor
-public class CommentAnalysisResult {
+@SuperBuilder
+public class CommentAnalysisResult extends AbstractAnalysisResult{
 
-    private String id;
+    @ManyToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "video_id", referencedColumnName = "video_id")
+    private VideoAnalysisResult videoAnalysisResult;
 
-    private String videoUrl;
-
-    private String ownerName;
-
+    @Column(length = 1000)
     private String content;
 
-    private String date;
+    @Column(name = "publication_date")
+    private Date publishedAt;
 
-    private String analysisResult;
-
+    @Column(name = "category")
+    private String category;
 
 }

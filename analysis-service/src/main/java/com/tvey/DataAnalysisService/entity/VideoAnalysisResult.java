@@ -1,29 +1,37 @@
 package com.tvey.DataAnalysisService.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-import java.util.List;
-
-@Data
-@AllArgsConstructor
+@Entity(name = "video_analysis_result")
+@Getter
+@Setter
 @NoArgsConstructor
-public class VideoAnalysisResult {
+@SuperBuilder
+@EqualsAndHashCode(callSuper = true)
+public class VideoAnalysisResult extends AbstractAnalysisResult {
 
-    private long id;
 
+    @Column(name = "video_id", unique = true)
     private String videoId;
 
-    private double positivePart;
+    @Column(name = "positive_amount")
+    private int positive;
 
-    private double negativePart;
+    @Column(name = "negative_amount")
+    private int negative;
 
-    private double neutralPart;
 
-    private double irrelevantPart;
+    @Column(name = "neutral_amount")
+    private int neutral;
 
-    private int commentsAmount;
 
-    private List<CommentAnalysisResult> commentAnalysisResults;
+    @Column(name = "irrelevant_amount")
+    private int irrelevant;
+
 }

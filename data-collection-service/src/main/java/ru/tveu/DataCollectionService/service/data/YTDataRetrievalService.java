@@ -35,10 +35,8 @@ public class YTDataRetrievalService implements DataRetrievalService {
 
 
     @Override
-    public ApiDTO<YtContentDTO> retrieveData(String url, long maxComments) throws IOException {
+    public ApiDTO<YtContentDTO> retrieveData(String videoId, long maxComments) throws IOException {
         YouTube youtubeService = getService();
-
-        String videoId = urlProcessor.extractContentId(url);
 
         List<YtContentDTO> allComments = new ArrayList<>();
 
