@@ -31,8 +31,6 @@ public class YTDataRetrievalService implements DataRetrievalService {
     @Value("${YOUTUBE_API_KEY}")
     private String developerKey;
 
-    private final UrlProcessor urlProcessor;
-
 
     @Override
     public ApiDTO<YtContentDTO> retrieveData(String videoId, long maxComments) throws IOException {

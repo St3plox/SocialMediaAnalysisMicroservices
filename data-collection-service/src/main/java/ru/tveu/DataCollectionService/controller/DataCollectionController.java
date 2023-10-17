@@ -29,7 +29,7 @@ public class DataCollectionController {
 
         String videoId = urlProcessor.extractContentId(url);
 
-        ApiDTO<YtContentDTO> response = (ApiDTO<YtContentDTO>) dataRetrievalService.retrieveData(videoId, maxComments);
+        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -37,12 +37,12 @@ public class DataCollectionController {
         return new ResponseEntity<>(response, headers, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/yt")
+    @GetMapping(value = "/yt/id")
     @ResponseStatus(HttpStatus.OK)
     public ResponseEntity<ApiDTO<YtContentDTO>> getVideoCommentsById(@RequestParam String videoId, @RequestParam long maxComments)
             throws IOException {
 
-        ApiDTO<YtContentDTO> response = (ApiDTO<YtContentDTO>) dataRetrievalService.retrieveData(videoId, maxComments);
+        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
