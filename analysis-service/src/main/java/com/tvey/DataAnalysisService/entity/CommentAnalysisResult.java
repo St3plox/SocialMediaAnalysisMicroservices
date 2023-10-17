@@ -1,6 +1,7 @@
 
 package com.tvey.DataAnalysisService.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -16,6 +17,7 @@ public class CommentAnalysisResult extends AbstractAnalysisResult{
 
     @ManyToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "video_id", referencedColumnName = "video_id")
+    @JsonIgnore
     private VideoAnalysisResult videoAnalysisResult;
 
     @Column(length = 1000)
