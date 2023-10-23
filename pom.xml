@@ -21,6 +21,7 @@
         <module>data-collection-service</module>
         <module>discovery-server</module>
         <module>api-gateway</module>
+        <module>data-service</module>
     </modules>
 
     <properties>

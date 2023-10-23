@@ -6,7 +6,6 @@ import com.tvey.DataAnalysisService.dto.YtVideoAnalysisDTO;
 import com.tvey.DataAnalysisService.entity.CommentAnalysisResult;
 import com.tvey.DataAnalysisService.entity.VideoAnalysisResult;
 import com.tvey.DataAnalysisService.service.model.SentimentModelService;
-import com.tvey.DataAnalysisService.service.result.interfaces.AnalysisResultService;
 import lombok.RequiredArgsConstructor;
 import opennlp.tools.doccat.DoccatModel;
 import opennlp.tools.doccat.DocumentCategorizerME;
@@ -47,6 +46,7 @@ public class VideoAnalyzer implements TextAnalyzer<YtContentDTO, YtVideoAnalysis
             model = unwrapModel(modelService.trainModel("twitter_training.csv"));
             modelService.saveModel(model, fileName);
         }
+
 
 
         DocumentCategorizerME categorizer = new DocumentCategorizerME(model);
