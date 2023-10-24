@@ -36,7 +36,7 @@ The project follows best practices for GitHub repositories, maintaining a clear 
 1. Clone the repository:
 
    ```bash
-   git clone https://github.com/your-username/SocialMediaAnalysisMicroservices.git
+   git clone https://github.com/st3pegor/SocialMediaAnalysisMicroservices.git
 
 2.Set up the development environment (install jdk 17).
 
