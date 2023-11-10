@@ -17,7 +17,7 @@ import lombok.experimental.SuperBuilder;
 public class VideoAnalysisResult extends AbstractAnalysisResult {
 
 
-    @Column(name = "video_id", unique = true)
+    @Column(name = "video_id")
     private String videoId;
 
     @Column(name = "positive_amount")

@@ -84,6 +84,7 @@ public class VideoAnalyzer implements TextAnalyzer<YtContentDTO, YtVideoAnalysis
                             .videoAnalysisResult(analysisResult)
                             .content(comment.getContent())
                             .category(category)
+                            .commentId(comment.getId())
                             .build()
             );
 

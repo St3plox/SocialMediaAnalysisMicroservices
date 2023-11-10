@@ -12,6 +12,8 @@ import ru.tveu.shared.dto.ApiDTO;
 import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/data")
@@ -24,12 +26,16 @@ public class DataCollectionController {
 
     @GetMapping(value = "/yt")
     @ResponseStatus(HttpStatus.OK)
-    public ResponseEntity<ApiDTO<YtContentDTO>> getVideoCommentsByUrl(@RequestParam String url, @RequestParam long maxComments)
+    public ResponseEntity<ApiDTO<YtContentDTO>> getVideoCommentsByUrl(
+            @RequestParam String url,
+            @RequestParam long maxComments,
+            @RequestParam(defaultValue = "") Set<String> usedIds)
+
             throws IOException {
 
         String videoId = urlProcessor.extractContentId(url);
 
-        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments);
+        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments, usedIds);
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -42,7 +48,7 @@ public class DataCollectionController {
     public ResponseEntity<ApiDTO<YtContentDTO>> getVideoCommentsById(@RequestParam String videoId, @RequestParam long maxComments)
             throws IOException {
 
-        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments);
+        ApiDTO<YtContentDTO> response = dataRetrievalService.retrieveData(videoId, maxComments, new HashSet<>(0));
 
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);

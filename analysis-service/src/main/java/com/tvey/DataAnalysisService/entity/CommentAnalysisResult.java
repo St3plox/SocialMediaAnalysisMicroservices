@@ -13,6 +13,7 @@ import java.util.Date;
 @Setter
 @NoArgsConstructor
 @SuperBuilder
+@EqualsAndHashCode(callSuper = true)
 public class CommentAnalysisResult extends AbstractAnalysisResult{
 
     @ManyToOne(cascade = CascadeType.ALL)
@@ -22,6 +23,9 @@ public class CommentAnalysisResult extends AbstractAnalysisResult{
 
     @Column(length = 1000)
     private String content;
+
+    @Column(length = 1000)
+    private String commentId;
 
     @Column(name = "publication_date")
     private Date publishedAt;

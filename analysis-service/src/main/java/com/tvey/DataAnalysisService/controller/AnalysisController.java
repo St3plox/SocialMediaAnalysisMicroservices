@@ -17,8 +17,8 @@ public class AnalysisController {
     @GetMapping("/yt")
     @ResponseStatus(HttpStatus.OK)
     @CircuitBreaker(name = "data-collection", fallbackMethod = "fallbackMethod")
-    public YtVideoAnalysisDTO getVideoComments(@RequestParam String url, @RequestParam(defaultValue = "5000")
-    long maxComments) {
+    public YtVideoAnalysisDTO getVideoComments(@RequestParam String url,
+                                               @RequestParam(defaultValue = "5000") long maxComments) {
 
         return videoAnalysisResult.getVideoAnalysisResult(url, maxComments);
     }

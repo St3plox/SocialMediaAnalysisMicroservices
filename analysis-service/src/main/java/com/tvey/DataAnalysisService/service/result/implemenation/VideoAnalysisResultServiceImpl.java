@@ -10,15 +10,23 @@ import com.tvey.DataAnalysisService.repository.VideoAnalysisResultRepository;
 import com.tvey.DataAnalysisService.service.analyzer.VideoAnalyzer;
 import com.tvey.DataAnalysisService.service.data.YtDataService;
 import com.tvey.DataAnalysisService.service.result.interfaces.VideoAnalysisResultService;
+import lombok.extern.slf4j.Slf4j;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.tveu.shared.dto.ApiDTO;
 import ru.tveu.shared.dto.YtContentDTO;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
+
+
+// TODO: 30.10.2023 Fix already exists exception
 
 @Service
+@Slf4j
 public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<VideoAnalysisResult> implements VideoAnalysisResultService {
 
     private final VideoAnalyzer videoAnalyzer;
@@ -28,6 +36,8 @@ public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<Vi
     private final VideoAnalysisResultRepository videoAnalysisResultRepository;
 
     private final CommentAnalysisResultRepository commentAnalysisResultRepository;
+
+    private final Logger logger = LoggerFactory.getLogger(VideoAnalysisResultServiceImpl.class);
 
 
     public VideoAnalysisResultServiceImpl(AnalysisResultRepository<VideoAnalysisResult> resultRepository,
@@ -43,25 +53,14 @@ public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<Vi
 
     @Override
     public YtVideoAnalysisDTO getVideoAnalysisResult(Long id) {
-
         Optional<VideoAnalysisResult> optionalAnalysisResult = videoAnalysisResultRepository.findById(id);
-
-        if (optionalAnalysisResult.isEmpty())
-            throw new IllegalArgumentException("No such video analysis result with id " + id);
-
-        return retrieveYtAnalysisDto(optionalAnalysisResult.get());
+        return retrieveYtAnalysisDto(optionalAnalysisResult);
     }
 
     @Override
     public YtVideoAnalysisDTO getVideoAnalysisResult(String videoId) {
-
         Optional<VideoAnalysisResult> optionalAnalysisResult = videoAnalysisResultRepository.findByVideoId(videoId);
-
-        if (optionalAnalysisResult.isEmpty())
-            throw new IllegalArgumentException("No such video analysis result with id " + videoId);
-
-
-        return retrieveYtAnalysisDto(optionalAnalysisResult.get());
+        return retrieveYtAnalysisDto(optionalAnalysisResult);
     }
 
     @Override
@@ -71,30 +70,157 @@ public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<Vi
         Optional<VideoAnalysisResult> resultOptional = videoAnalysisResultRepository.findByVideoId(videoId);
 
         if (resultOptional.isPresent()) {
-            return retrieveYtAnalysisDto(resultOptional.get());
+            return retrieveYtAnalysisDto(resultOptional, maxComments, url);
         }
 
-        ApiDTO<YtContentDTO> apiDTO = dataService.retrieveData(url, maxComments);
+        ApiDTO<YtContentDTO> apiDTO = dataService.retrieveData(url, maxComments, new HashSet<>(0));
+        YtVideoAnalysisDTO resultDTO = analyzeResults(apiDTO);
 
+
+        // Save the VideoAnalysisResult
+        videoAnalysisResultRepository.save(resultDTO.getVideoAnalysisResult());
+
+        // Update references in CommentAnalysisResult entities
+        resultDTO.getCommentAnalysisResults().forEach(comment -> comment.setVideoAnalysisResult(resultDTO.getVideoAnalysisResult()));
+
+        // Save the CommentAnalysisResult entities
+        commentAnalysisResultRepository.saveAll(resultDTO.getCommentAnalysisResults());
+
+
+        return resultDTO;
+    }
+
+    private YtVideoAnalysisDTO analyzeResults(ApiDTO<YtContentDTO> apiDTO) {
         YtVideoAnalysisDTO dto;
 
         try {
             dto = videoAnalyzer.analyzeEntity(apiDTO);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("An error occurred in VideoAnalysisResultServiceImpl:", e);
             throw new RuntimeException(e);
         }
-
-        resultRepository.save(dto.getVideoAnalysisResult());
-        commentAnalysisResultRepository.saveAll(dto.getCommentAnalysisResults());
-
         return dto;
     }
 
-    private YtVideoAnalysisDTO retrieveYtAnalysisDto(VideoAnalysisResult analysisResult) {
+    private YtVideoAnalysisDTO retrieveYtAnalysisDto(Optional<VideoAnalysisResult> optionalAnalysisResult) {
+
+        VideoAnalysisResult analysisResult = optionalAnalysisResult.orElseThrow(() ->
+                new IllegalArgumentException("No such video analysis result"));
 
         List<CommentAnalysisResult> commentAnalysisResults = commentAnalysisResultRepository
-                .findCommentAnalysisResultByVideoAnalysisResult(analysisResult);
+                .findAllByVideoAnalysisResultOrderByPublishedAtDesc(
+                        analysisResult,
+                        PageRequest.of(0,
+                                5000)
+                );
+
+        return YtVideoAnalysisDTO.builder()
+                .videoAnalysisResult(analysisResult)
+                .commentAnalysisResults(commentAnalysisResults)
+                .dataSource(DataSource.YOUTUBE)
+                .build();
+    }
+
+    private YtVideoAnalysisDTO retrieveYtAnalysisDto(Optional<VideoAnalysisResult> optionalAnalysisResult, long maxComments, String url) {
+
+        VideoAnalysisResult analysisResult = optionalAnalysisResult.orElseThrow(() ->
+                new IllegalArgumentException("No such video analysis result"));
+
+        List<CommentAnalysisResult> commentAnalysisResults = commentAnalysisResultRepository
+                .findAllByVideoAnalysisResultOrderByPublishedAtDesc(
+                        analysisResult,
+                        PageRequest.of(0,
+                                (int) maxComments)
+                );
+
+        if (commentAnalysisResults.size() < maxComments) {
+
+            Set<String> usedCommentIds = new HashSet<>();
+            commentAnalysisResults.forEach(comment -> usedCommentIds.add(comment.getCommentId()));
+
+            ApiDTO<YtContentDTO> additionalCommentsDTO =
+                    dataService.retrieveData(
+                            url,
+                            maxComments,
+                            usedCommentIds
+                    );
+
+            List<CommentAnalysisResult> additionalComments = analyzeResults(additionalCommentsDTO).getCommentAnalysisResults();
+            List<CommentAnalysisResult> duplicatesToRemove = new ArrayList<>();
+
+            for (var commentAR : commentAnalysisResults) {
+                for (var addCommentAR : additionalComments) {
+                    if (Objects.equals(commentAR.getCommentId(), addCommentAR.getCommentId())) {
+                        duplicatesToRemove.add(addCommentAR);
+                        System.out.println("FOUND DUPLICATE VALUE !!!!!!!!!!" +
+                                "\n !!!!!!!!!!!!!!!!!!!!!!!!!!!" +
+                                "\n !!!!!!!!!!!!!!!!!!!!!!!!!!!" +
+                                "\n !!!!!!!!!!!!!!!!!!!!!!!!!!!" +
+                                "\n !!!!!!!!!!!!!!!!!!!!!!!!!!!");
+                    }
+                }
+            }
+
+            additionalComments.removeAll(duplicatesToRemove);
+
+            // Delete existing VideoAnalysisResult
+            videoAnalysisResultRepository.deleteById(analysisResult.getId());
+
+            List<Long> commentAnalysisResultIds = new ArrayList<>(commentAnalysisResults.size());
+
+            commentAnalysisResults.forEach(comment ->
+                    commentAnalysisResultIds.add(comment.getId()));
+
+            // Delete existing CommentAnalysisResult entities
+            commentAnalysisResultRepository.deleteAllById(commentAnalysisResultIds);
+
+            commentAnalysisResults.addAll(additionalComments);
+
+            additionalComments.forEach(comment -> {
+                int positive = 0;
+                int negative = 0;
+                int neutral = 0;
+                int irrelevant = 0;
+
+                switch (comment.getCategory()) {
+                    case "Positive" -> positive++;
+                    case "Negative" -> negative++;
+                    case "Neutral" -> neutral++;
+                    case "Irrelevant" -> irrelevant++;
+                }
+
+                analysisResult.setPositive(analysisResult.getPositive() + positive);
+                analysisResult.setNegative(analysisResult.getNegative() + negative);
+                analysisResult.setNeutral(analysisResult.getNeutral() + neutral);
+                analysisResult.setIrrelevant(analysisResult.getIrrelevant() + irrelevant);
+            });
+
+
+            VideoAnalysisResult newVideoAnalysisResult = VideoAnalysisResult.builder()
+                    .videoId(analysisResult.getVideoId())
+                    .positive(analysisResult.getPositive())
+                    .negative(analysisResult.getNegative())
+                    .neutral(analysisResult.getNeutral())
+                    .irrelevant(analysisResult.getIrrelevant())
+                    .build();
+
+            // Save the updated VideoAnalysisResult
+            videoAnalysisResultRepository.save(newVideoAnalysisResult);
+
+
+            for (int i = 0; i < commentAnalysisResults.size(); i++){
+                CommentAnalysisResult comment = commentAnalysisResults.get(i);
+
+                CommentAnalysisResult newComment = new CommentAnalysisResult();
+                newComment.setContent(comment.getContent());
+                newComment.setCategory(comment.getCategory());
+                newComment.setPublishedAt(comment.getPublishedAt());
+                newComment.setVideoAnalysisResult(newVideoAnalysisResult);
+
+                commentAnalysisResults.set(i, newComment);
+            }
+            commentAnalysisResultRepository.saveAll(commentAnalysisResults);
+        }
 
         return YtVideoAnalysisDTO.builder()
                 .videoAnalysisResult(analysisResult)
