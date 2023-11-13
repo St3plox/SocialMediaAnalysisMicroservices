@@ -41,7 +41,7 @@ public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<Vi
 
     public VideoAnalysisResultServiceImpl(AnalysisResultRepository<VideoAnalysisResult> resultRepository,
                                           VideoAnalyzer videoAnalyzer,
-                                          YtDataService dataService, VideoAnalysisResultRepository videoAnalysisResultRepository, VideoAnalysisResultRepository videoAnalysisResultRepository1, CommentAnalysisResultRepository commentAnalysisResultRepository) {
+                                          YtDataService dataService, VideoAnalysisResultRepository videoAnalysisResultRepository1, CommentAnalysisResultRepository commentAnalysisResultRepository) {
         super(resultRepository);
 
         this.videoAnalyzer = videoAnalyzer;
