@@ -13,7 +13,6 @@ import com.tvey.DataAnalysisService.service.result.interfaces.VideoAnalysisResul
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.tveu.shared.dto.ApiDTO;
@@ -163,63 +162,30 @@ public class VideoAnalysisResultServiceImpl extends AnalysisResultServiceImpl<Vi
 
             additionalComments.removeAll(duplicatesToRemove);
 
-            // Delete existing VideoAnalysisResult
-            videoAnalysisResultRepository.deleteById(analysisResult.getId());
-
-            List<Long> commentAnalysisResultIds = new ArrayList<>(commentAnalysisResults.size());
-
-            commentAnalysisResults.forEach(comment ->
-                    commentAnalysisResultIds.add(comment.getId()));
-
-            // Delete existing CommentAnalysisResult entities
-            commentAnalysisResultRepository.deleteAllById(commentAnalysisResultIds);
-
             commentAnalysisResults.addAll(additionalComments);
 
-            additionalComments.forEach(comment -> {
-                int positive = 0;
-                int negative = 0;
-                int neutral = 0;
-                int irrelevant = 0;
+            int positive = 0;
+            int negative = 0;
+            int neutral = 0;
+            int irrelevant = 0;
 
+            for (var comment : additionalComments) {
                 switch (comment.getCategory()) {
                     case "Positive" -> positive++;
                     case "Negative" -> negative++;
                     case "Neutral" -> neutral++;
                     case "Irrelevant" -> irrelevant++;
                 }
-
-                analysisResult.setPositive(analysisResult.getPositive() + positive);
-                analysisResult.setNegative(analysisResult.getNegative() + negative);
-                analysisResult.setNeutral(analysisResult.getNeutral() + neutral);
-                analysisResult.setIrrelevant(analysisResult.getIrrelevant() + irrelevant);
-            });
-
-
-            VideoAnalysisResult newVideoAnalysisResult = VideoAnalysisResult.builder()
-                    .videoId(analysisResult.getVideoId())
-                    .positive(analysisResult.getPositive())
-                    .negative(analysisResult.getNegative())
-                    .neutral(analysisResult.getNeutral())
-                    .irrelevant(analysisResult.getIrrelevant())
-                    .build();
-
-            // Save the updated VideoAnalysisResult
-            videoAnalysisResultRepository.save(newVideoAnalysisResult);
-
-
-            for (int i = 0; i < commentAnalysisResults.size(); i++){
-                CommentAnalysisResult comment = commentAnalysisResults.get(i);
-
-                CommentAnalysisResult newComment = new CommentAnalysisResult();
-                newComment.setContent(comment.getContent());
-                newComment.setCategory(comment.getCategory());
-                newComment.setPublishedAt(comment.getPublishedAt());
-                newComment.setVideoAnalysisResult(newVideoAnalysisResult);
-
-                commentAnalysisResults.set(i, newComment);
             }
-            commentAnalysisResultRepository.saveAll(commentAnalysisResults);
+
+            analysisResult.setPositive(analysisResult.getPositive() + positive);
+            analysisResult.setNegative(analysisResult.getNegative() + negative);
+            analysisResult.setNeutral(analysisResult.getNeutral() + neutral);
+            analysisResult.setIrrelevant(analysisResult.getIrrelevant() + irrelevant);
+
+
+
+            videoAnalysisResultRepository.save(analysisResult);
         }
 
         return YtVideoAnalysisDTO.builder()
